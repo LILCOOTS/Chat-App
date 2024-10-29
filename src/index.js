@@ -12,18 +12,44 @@ const publicDir = path.join(__dirname, "../public/");
 
 app.use(express.static(publicDir));
 
-let count = 0;
+//let count = 0;
 
 io.on("connection", (socket) => {
   console.log("socket connected");
 
-  socket.emit("countStatus", count);
+  //emit to the particular or active or self client
+  socket.emit("message", "Welcome!");
+  //emit to every other client except self
+  socket.broadcast.emit("message", "A new user has joined");
 
-  socket.on("updateCount", (id) => {
-    count++;
-
-    io.emit("countStatus", count, id);
+  socket.on("sendMsg", (val) => {
+    //emit to every client connected to the server
+    io.emit("message", val);
   });
+
+  socket.on("sendMsgSelf", () => {
+    socket.emit("message", "Your Browser doesn't support sharing location");
+  });
+
+  socket.on("sendLocation", (loc) => {
+    socket.broadcast.emit(
+      "message",
+      `https://google.com/maps?q=${loc.lat},${loc.long}`,
+    );
+  });
+
+  socket.on("disconnect", () => {
+    io.emit("message", "Someone disconnected");
+  });
+
+  //              COUNTER
+  // socket.emit("countStatus", count);
+  //
+  // socket.on("updateCount", (id) => {
+  //   count++;
+  //
+  //   io.emit("countStatus", count, id);
+  // });
 });
 
 server.listen(port, () => console.log(`app is listening to port ${port}`));

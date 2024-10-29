@@ -9,7 +9,12 @@
   <body>
     Chat App!
 
-    <button type="button" id="click">Click to Increment</button>
+    <form id="form">
+      <input type="text" name="msg" id="msg" />
+      <button type="submit">Submit</button>
+    </form>
+
+    <button id="locBtn">Share Location</button>
     <!--server side js-->
     <script src="/socket.io/socket.io.js"></script>
     <!--client-side js-->
