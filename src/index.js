@@ -22,20 +22,22 @@ io.on("connection", (socket) => {
   //emit to every other client except self
   socket.broadcast.emit("message", "A new user has joined");
 
-  socket.on("sendMsg", (val) => {
+  socket.on("sendMsg", (val, callback) => {
     //emit to every client connected to the server
     io.emit("message", val);
+    callback("Delivered");
   });
 
   socket.on("sendMsgSelf", () => {
     socket.emit("message", "Your Browser doesn't support sharing location");
   });
 
-  socket.on("sendLocation", (loc) => {
+  socket.on("sendLocation", (loc, callback) => {
     socket.broadcast.emit(
       "message",
       `https://google.com/maps?q=${loc.lat},${loc.long}`,
     );
+    callback("Location Sent");
   });
 
   socket.on("disconnect", () => {
