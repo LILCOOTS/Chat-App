@@ -14,6 +14,7 @@ const publicDir = path.join(__dirname, "../public/");
 app.use(express.static(publicDir));
 
 //let count = 0;
+const userList = {};
 
 io.on("connection", (socket) => {
   console.log("socket connected");
@@ -27,18 +28,25 @@ io.on("connection", (socket) => {
 
     //creating a private room for a particular room name
     socket.join(roomName);
-
+    if (!userList[`${socket.roomName}`]) {
+      userList[`${socket.roomName}`] = [];
+    }
+    userList[`${socket.roomName}`].push({ userName: socket.userName });
+    io.emit("joinUser", userList);
     //emit to the particular or active or self client
-    socket.emit("message", msgInfo("Welcome!"));
+    socket.emit("systemMsg", `Welcome ${userName}!`);
     //emit to every other client in that room except self, ".to()" specifies a room in which the event will be listened
     socket.broadcast
       .to(roomName)
-      .emit("message", msgInfo(`${userName} has joined`));
+      .emit("systemMsg", `${socket.userName} has joined`);
   });
 
   socket.on("sendMsg", ({ value, userName, roomName }, callback) => {
     //emit to every client connected to the server
-    io.to(roomName).emit("message", msgInfo(value));
+    socket.broadcast
+      .to(roomName)
+      .emit("message", msgInfo(value, socket.userName));
+    socket.emit("myMessage", msgInfo(value, socket.userName));
     callback("Delivered");
   });
 
@@ -52,15 +60,24 @@ io.on("connection", (socket) => {
   socket.on("sendLocation", ({ loc, userName, roomName }, callback) => {
     socket.broadcast
       .to(roomName)
-      .emit("messageLocation", locInfo(loc.lat, loc.long));
+      .emit("messageLocation", locInfo(loc.lat, loc.long, socket.userName));
+    socket.emit("systemMsg", "Your Location was sent");
     callback("Location Sent");
   });
 
   socket.on("disconnect", () => {
+    if (userList[`${socket.roomName}`]) {
+      userList[`${socket.roomName}`] = userList[`${socket.roomName}`].filter(
+        (user) => {
+          return user.userName !== socket.userName;
+        },
+      );
+    }
     io.to(socket.roomName).emit(
-      "message",
-      msgInfo(`${socket.userName} has disconnected`),
+      "systemMsg",
+      `${socket.userName} has disconnected`,
     );
+    io.emit("joinUser", userList);
   });
 
   //              COUNTER

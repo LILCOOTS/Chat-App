@@ -94,6 +94,9 @@ button:disabled {
   font-size: 14px;
   margin-right: 8px;
 }
+.capitalize {
+  text-transform: capitalize;
+}
 .message__meta {
   color: #777;
   font-size: 14px;
@@ -139,4 +142,3 @@ button:disabled {
   font-weight: 300;
   padding: 12px 24px 0;
 }
-
