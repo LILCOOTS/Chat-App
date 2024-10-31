@@ -5,14 +5,25 @@ const form = document.getElementById("form");
 const locBtn = document.getElementById("locBtn");
 const messageArea = document.getElementById("message-area");
 
-const messageTemplate = document.getElementById("message-templates").innerHTML; //mustache library will use this as a template
+const messageTemplate = document.getElementById("message-template").innerHTML; //mustache library will use this as a template
+const locationTemplate = document.getElementById("location-template").innerHTML;
 
 socket.on("message", (msg) => {
   const html = Mustache.render(messageTemplate, {
-    message: msg,
+    message: msg.msg,
+    time: moment(msg.time).format("kk:mm"),
   });
   messageArea.insertAdjacentHTML("beforeend", html);
   console.log(msg);
+});
+
+socket.on("messageLocation", (loc) => {
+  const html = Mustache.render(locationTemplate, {
+    location: loc.loc,
+    time: moment(loc.time).format("kk:mm"),
+  });
+  messageArea.insertAdjacentHTML("beforeend", html);
+  console.log(loc);
 });
 
 form.addEventListener("submit", (e) => {

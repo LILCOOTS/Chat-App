@@ -2,6 +2,7 @@ const express = require("express");
 const socketIO = require("socket.io");
 const http = require("node:http");
 const path = require("path");
+const { msgInfo, locInfo } = require("../utils/messages.js");
 
 const app = express();
 const server = http.createServer(app);
@@ -18,30 +19,30 @@ io.on("connection", (socket) => {
   console.log("socket connected");
 
   //emit to the particular or active or self client
-  socket.emit("message", "Welcome!");
+  socket.emit("message", msgInfo("Welcome!"));
   //emit to every other client except self
-  socket.broadcast.emit("message", "A new user has joined");
+  socket.broadcast.emit("message", msgInfo("A new user has joined"));
 
   socket.on("sendMsg", (val, callback) => {
     //emit to every client connected to the server
-    io.emit("message", val);
+    io.emit("message", msgInfo(val));
     callback("Delivered");
   });
 
   socket.on("sendMsgSelf", () => {
-    socket.emit("message", "Your Browser doesn't support sharing location");
+    socket.emit(
+      "message",
+      msgInfo("Your Browser doesn't support sharing location"),
+    );
   });
 
   socket.on("sendLocation", (loc, callback) => {
-    socket.broadcast.emit(
-      "message",
-      `https://google.com/maps?q=${loc.lat},${loc.long}`,
-    );
+    socket.broadcast.emit("messageLocation", locInfo(loc.lat, loc.long));
     callback("Location Sent");
   });
 
   socket.on("disconnect", () => {
-    io.emit("message", "Someone disconnected");
+    io.emit("message", msgInfo("Someone disconnected"));
   });
 
   //              COUNTER
