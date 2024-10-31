@@ -8,6 +8,11 @@ const messageArea = document.getElementById("message-area");
 const messageTemplate = document.getElementById("message-template").innerHTML; //mustache library will use this as a template
 const locationTemplate = document.getElementById("location-template").innerHTML;
 
+const { userName, roomName } = Qs.parse(location.search, {
+  ignoreQueryPrefix: true,
+});
+console.log(userName, roomName);
+
 socket.on("message", (msg) => {
   const html = Mustache.render(messageTemplate, {
     message: msg.msg,
@@ -28,9 +33,9 @@ socket.on("messageLocation", (loc) => {
 
 form.addEventListener("submit", (e) => {
   e.preventDefault();
-
-  if (input.value) {
-    socket.emit("sendMsg", input.value, (confirmation) => {
+  const value = input.value;
+  if (value) {
+    socket.emit("sendMsg", { value, userName, roomName }, (confirmation) => {
       console.log(confirmation);
     });
   }
@@ -50,13 +55,19 @@ locBtn.addEventListener("click", () => {
         lat: position.coords.latitude,
         long: position.coords.longitude,
       };
-      socket.emit("sendLocation", loc, (confirmation) => {
-        console.log(confirmation);
-        locBtn.removeAttribute("disabled");
-      });
+      socket.emit(
+        "sendLocation",
+        { loc, userName, roomName },
+        (confirmation) => {
+          console.log(confirmation);
+          locBtn.removeAttribute("disabled");
+        },
+      );
     });
   }
 });
+
+socket.emit("roomJoin", { userName, roomName });
 
 //                          COUNTER
 // socket.on("countStatus", (count, id) => {

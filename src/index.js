@@ -18,14 +18,27 @@ app.use(express.static(publicDir));
 io.on("connection", (socket) => {
   console.log("socket connected");
 
-  //emit to the particular or active or self client
-  socket.emit("message", msgInfo("Welcome!"));
   //emit to every other client except self
-  socket.broadcast.emit("message", msgInfo("A new user has joined"));
+  //socket.broadcast.emit("message", msgInfo("A new user has joined"));
 
-  socket.on("sendMsg", (val, callback) => {
+  socket.on("roomJoin", ({ userName, roomName }) => {
+    socket.userName = userName;
+    socket.roomName = roomName;
+
+    //creating a private room for a particular room name
+    socket.join(roomName);
+
+    //emit to the particular or active or self client
+    socket.emit("message", msgInfo("Welcome!"));
+    //emit to every other client in that room except self, ".to()" specifies a room in which the event will be listened
+    socket.broadcast
+      .to(roomName)
+      .emit("message", msgInfo(`${userName} has joined`));
+  });
+
+  socket.on("sendMsg", ({ value, userName, roomName }, callback) => {
     //emit to every client connected to the server
-    io.emit("message", msgInfo(val));
+    io.to(roomName).emit("message", msgInfo(value));
     callback("Delivered");
   });
 
@@ -36,13 +49,18 @@ io.on("connection", (socket) => {
     );
   });
 
-  socket.on("sendLocation", (loc, callback) => {
-    socket.broadcast.emit("messageLocation", locInfo(loc.lat, loc.long));
+  socket.on("sendLocation", ({ loc, userName, roomName }, callback) => {
+    socket.broadcast
+      .to(roomName)
+      .emit("messageLocation", locInfo(loc.lat, loc.long));
     callback("Location Sent");
   });
 
   socket.on("disconnect", () => {
-    io.emit("message", msgInfo("Someone disconnected"));
+    io.to(socket.roomName).emit(
+      "message",
+      msgInfo(`${socket.userName} has disconnected`),
+    );
   });
 
   //              COUNTER
